@@ -1,6 +1,6 @@
 {
   "name": "pubg-numbers-feed",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "100 numbered killfeed team icons for PUBG: BATTLEGROUNDS - big high-contrast team digits in distinct colors, typeset in Geologica",
   "main": "src/generate.js",
   "private": true,

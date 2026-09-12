@@ -13,10 +13,11 @@ const NUMBERED_DIR = path.join(OBSERVER_DIR, 'TeamIconNumbered');
 const PREVIEW_DIR = path.join(ROOT, 'preview');
 const DIST_DIR = path.join(ROOT, 'dist');
 const FONT_PATH = path.join(__dirname, 'assets', 'fonts', 'Geologica-ExtraBold.ttf');
+const VERSION = require('../package.json').version;
 
 const COUNT = 100;
 const SIZE = 64;
-const MAX_FONT_SIZE = 48;
+const MAX_FONT_SIZE = 72;
 const FAMILY = 'Geologica';
 const WEIGHT = 800;
 const DARK_TEXT = '#141519';
@@ -87,8 +88,8 @@ function drawIcon(number, rgb, variant) {
   ctx.strokeRect(1, 1, SIZE - 2, SIZE - 2);
 
   const text = String(number);
-  const padding = text.length >= 3 ? 3 : 6;
-  const size = fitFontSize(ctx, text, SIZE - padding * 2, SIZE - 8);
+  const padding = variant === 'numbered' ? 4 : 2;
+  const size = fitFontSize(ctx, text, SIZE - padding * 2, SIZE - padding * 2);
   const m = textMetrics(ctx, text, size);
 
   ctx.textAlign = 'center';
@@ -100,7 +101,7 @@ function drawIcon(number, rgb, variant) {
     ctx.lineJoin = 'round';
     ctx.miterLimit = 2;
     ctx.strokeStyle = fill === LIGHT_TEXT ? DARK_TEXT : LIGHT_TEXT;
-    ctx.lineWidth = Math.max(2, Math.round(size * 0.1));
+    ctx.lineWidth = Math.min(4, Math.max(2, size * 0.07));
     ctx.strokeText(text, SIZE / 2, baselineY);
   }
 
@@ -272,7 +273,7 @@ async function main() {
   await savePng(killfeedDemo(plainCanvases), path.join(PREVIEW_DIR, 'killfeed-demo.png'));
 
   const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } });
-  const zipPath = path.join(DIST_DIR, 'pubg-numbers-feed-v1.0.0.zip');
+  const zipPath = path.join(DIST_DIR, `pubg-numbers-feed-v${VERSION}.zip`);
   fs.writeFileSync(zipPath, zipBuffer);
 
   console.log('');

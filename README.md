@@ -48,13 +48,15 @@ Outputs:
 
 - `Observer/` — icons + `Teaminfo.csv` (paste this into the game)
 - `preview/` — contact sheets and demo images
-- `dist/pubg-numbers-feed-v1.0.0.zip` — ready-to-share archive with the `Observer` folder
+- `dist/pubg-numbers-feed-v<version>.zip` - ready-to-share archive with the `Observer` folder
 
 Tweak `COUNT`, `SIZE` or the palette in `teamColor()` inside `src/generate.js` and re-run.
 
 ## Typography
 
-[Geologica](https://fonts.google.com/specimen/Geologica) by Nyisha Mirza Kalimar, Nazareth Seferian & Eben Sorkin — ExtraBold (weight 800), auto-sized up to 48 px on the 64 px canvas. The font is bundled in `src/assets/fonts/` under the [SIL Open Font License 1.1](src/assets/fonts/Geologica-OFL.txt).
+[Geologica](https://fonts.google.com/specimen/Geologica) by Nyisha Mirza Kalimar, Nazareth Seferian & Eben Sorkin — ExtraBold (weight 800), auto-sized up to 72 px on the 64 px canvas with a 2 px margin, so digits fill about 85% of the icon regardless of digit count.
+
+**Stretched resolutions (16:10 on 16:9 panels) are accounted for:** the layout keeps ~10% headroom and relies on the heavy 800 weight, so counters of `0`, `6`, `8`, `9` stay open and digits remain fully legible under the ~11% non-uniform scaling. The font is bundled in `src/assets/fonts/` under the [SIL Open Font License 1.1](src/assets/fonts/Geologica-OFL.txt).
 
 ## Credits
 
