@@ -1,82 +1,108 @@
-const fs = require('fs');
-const path = require('path');
-const { createCanvas, registerFont } = require('canvas');
-const JSZip = require('jszip');
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { deflateRawSync, deflateSync } from 'node:zlib';
+import { createCanvas, registerFont, loadImage } from 'canvas';
+import pkg from '../package.json' with { type: 'json' };
 
-let sharp = null;
-try { sharp = require('sharp'); } catch (_) {}
-
-const ROOT = path.join(__dirname, '..');
-const OBSERVER_DIR = path.join(ROOT, 'Observer');
-const ICONS_DIR = path.join(OBSERVER_DIR, 'TeamIcon');
-const PREVIEW_DIR = path.join(ROOT, 'preview');
-const DIST_DIR = path.join(ROOT, 'dist');
-const FONT_PATH = path.join(__dirname, 'assets', 'fonts', 'Geologica-ExtraBold.ttf');
-const VERSION = require('../package.json').version;
+const here = dirname(fileURLToPath(import.meta.url));
+const root = join(here, '..');
+const observerDir = join(root, 'Observer');
+const iconsDir = join(observerDir, 'TeamIcon');
+const previewDir = join(root, 'preview');
+const distDir = join(root, 'dist');
+const fontPath = join(here, 'assets', 'fonts', 'Oxanium-ExtraBold.ttf');
+const version = pkg.version;
 
 const COUNT = 100;
 const SIZE = 64;
 const MAX_FONT_SIZE = 72;
 const PADDING = 4;
-const FAMILY = 'Geologica';
+const TRACKING = 0.06;
+const QUANT_TOLERANCE = 16;
+const FAMILY = 'Oxanium';
 const WEIGHT = 800;
 const DARK_TEXT = '#141519';
 const LIGHT_TEXT = '#FFFFFF';
 const LUMA_THRESHOLD = 0.45;
 
-registerFont(FONT_PATH, { family: FAMILY, weight: String(WEIGHT) });
+if (!process.env.PUBG_NUMBERS_FEED_CHILD) {
+  const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+    env: { ...process.env, PUBG_NUMBERS_FEED_CHILD: '1' },
+    stdio: ['inherit', 'inherit', 'pipe'],
+    encoding: 'utf8'
+  });
+  const filtered = (child.stderr || '')
+    .split('\n')
+    .filter((line) => !line.includes(`couldn't load font "${FAMILY}`))
+    .join('\n');
+  if (filtered.trim()) {
+    process.stderr.write(filtered);
+  }
+  process.exit(child.status ?? 1);
+}
 
-const fontSpec = size => `${WEIGHT} ${size}px ${FAMILY}`;
+registerFont(fontPath, { family: FAMILY });
 
-function hslToRgb(h, s, l) {
+const fontSpec = (size) => `${size}px ${FAMILY}`;
+
+const hslToRgb = (h, s, l) => {
   s /= 100;
   l /= 100;
-  const k = n => (n + h / 30) % 12;
+  const k = (n) => (n + h / 30) % 12;
   const a = s * Math.min(l, 1 - l);
-  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
   return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
-}
+};
 
-const toHex = rgb => '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+const toHex = (rgb) => `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
 
-function relativeLuminance(rgb) {
-  const f = v => {
+const relativeLuminance = ([r, g, b]) => {
+  const channel = (v) => {
     v /= 255;
-    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
   };
-  return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]);
-}
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+};
 
-function teamColor(index) {
+const teamColor = (index) => {
   const hue = (index * 137.508) % 360;
   const sat = 64 + (index % 2) * 12;
   const light = 50 + (Math.floor(index / 2) % 3) * 7;
   return hslToRgb(hue, sat, light);
-}
+};
 
-const textColor = rgb => (relativeLuminance(rgb) > LUMA_THRESHOLD ? DARK_TEXT : LIGHT_TEXT);
+const textColor = (rgb) => (relativeLuminance(rgb) > LUMA_THRESHOLD ? DARK_TEXT : LIGHT_TEXT);
 
-function textMetrics(ctx, text, size) {
+const layoutText = (ctx, text, size) => {
   ctx.font = fontSpec(size);
-  const m = ctx.measureText(text);
+  const tracking = size * TRACKING;
+  const chars = [...text];
+  const widths = chars.map((ch) => ctx.measureText(ch).width);
+  const full = ctx.measureText(text);
   return {
-    width: m.width,
-    ascent: m.actualBoundingBoxAscent || size * 0.74,
-    descent: m.actualBoundingBoxDescent || size * 0.04
+    chars,
+    widths,
+    tracking,
+    size,
+    width: widths.reduce((a, b) => a + b, 0) + tracking * (chars.length - 1),
+    ascent: full.actualBoundingBoxAscent || size * 0.74,
+    descent: full.actualBoundingBoxDescent || size * 0.04
   };
-}
+};
 
-function fitFontSize(ctx, text, maxWidth, maxHeight) {
+const fitLayout = (ctx, text, box) => {
   let size = MAX_FONT_SIZE;
-  while (size > 12) {
-    const m = textMetrics(ctx, text, size);
-    if (m.width <= maxWidth && m.ascent + m.descent <= maxHeight) break;
+  let layout = layoutText(ctx, text, size);
+  while (size > 12 && (layout.width > box || layout.ascent + layout.descent > box)) {
     size -= 1;
+    layout = layoutText(ctx, text, size);
   }
-  return size;
-}
+  return layout;
+};
 
-function drawIcon(number, rgb) {
+const drawIcon = (number, rgb) => {
   const canvas = createCanvas(SIZE, SIZE);
   const ctx = canvas.getContext('2d');
 
@@ -87,140 +113,316 @@ function drawIcon(number, rgb) {
   ctx.strokeStyle = 'rgba(10,12,16,0.30)';
   ctx.strokeRect(1, 1, SIZE - 2, SIZE - 2);
 
-  const text = String(number);
-  const size = fitFontSize(ctx, text, SIZE - PADDING * 2, SIZE - PADDING * 2);
-  const m = textMetrics(ctx, text, size);
-
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  const baselineY = SIZE / 2 + (m.ascent - m.descent) / 2;
+  const layout = fitLayout(ctx, String(number), SIZE - PADDING * 2);
+  const baselineY = SIZE / 2 + (layout.ascent - layout.descent) / 2;
+  const startX = SIZE / 2 - layout.width / 2;
   const fill = textColor(rgb);
 
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
   ctx.lineJoin = 'round';
   ctx.miterLimit = 2;
   ctx.strokeStyle = fill === LIGHT_TEXT ? DARK_TEXT : LIGHT_TEXT;
-  ctx.lineWidth = Math.min(4, Math.max(2, size * 0.07));
-  ctx.strokeText(text, SIZE / 2, baselineY);
+  ctx.lineWidth = Math.min(4, Math.max(2, layout.size * 0.07));
+
+  let x = startX;
+  for (let i = 0; i < layout.chars.length; i += 1) {
+    ctx.strokeText(layout.chars[i], x, baselineY);
+    x += layout.widths[i] + layout.tracking;
+  }
 
   ctx.shadowColor = 'rgba(8,10,14,0.30)';
   ctx.shadowBlur = 2;
   ctx.shadowOffsetY = 1;
   ctx.fillStyle = fill;
-  ctx.fillText(text, SIZE / 2, baselineY);
+
+  x = startX;
+  for (let i = 0; i < layout.chars.length; i += 1) {
+    ctx.fillText(layout.chars[i], x, baselineY);
+    x += layout.widths[i] + layout.tracking;
+  }
+
   ctx.shadowColor = 'rgba(0,0,0,0)';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
 
   return canvas;
-}
+};
 
-async function optimize(buffer) {
-  if (!sharp) return buffer;
-  return sharp(buffer).png({ palette: true, quality: 96, compressionLevel: 9 }).toBuffer();
-}
+let crcTable;
 
-function contactSheet(canvases, cols, cell, iconSize) {
+const crc32 = (buf) => {
+  if (!crcTable) {
+    crcTable = new Uint32Array(256);
+    for (let n = 0; n < 256; n += 1) {
+      let c = n;
+      for (let k = 0; k < 8; k += 1) {
+        c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      }
+      crcTable[n] = c >>> 0;
+    }
+  }
+  let c = 0xffffffff;
+  for (const byte of buf) {
+    c = crcTable[(c ^ byte) & 0xff] ^ (c >>> 8);
+  }
+  return (c ^ 0xffffffff) >>> 0;
+};
+
+const pngChunk = (type, data) => {
+  const out = Buffer.alloc(data.length + 12);
+  out.writeUInt32BE(data.length, 0);
+  out.write(type, 4, 'ascii');
+  data.copy(out, 8);
+  out.writeUInt32BE(crc32(out.subarray(4, out.length - 4)), out.length - 4);
+  return out;
+};
+
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+const encodePng = ({ data, width, height }) => {
+  const pixelCount = width * height;
+  const lookup = new Map();
+  const colors = [];
+  const indexed = Buffer.alloc(pixelCount);
+
+  for (let i = 0; i < pixelCount; i += 1) {
+    const r = data[i * 4];
+    const g = data[i * 4 + 1];
+    const b = data[i * 4 + 2];
+    const a = data[i * 4 + 3];
+    const key = ((r << 24) | (g << 16) | (b << 8) | a) >>> 0;
+    let idx = lookup.get(key);
+    if (idx === undefined) {
+      if (colors.length < 256) {
+        idx = colors.length;
+        colors.push(key);
+      } else {
+        let bestDist = Infinity;
+        for (let p = 0; p < colors.length; p += 1) {
+          const c = colors[p];
+          const dr = r - (c >>> 24);
+          const dg = g - ((c >>> 16) & 0xff);
+          const db = b - ((c >>> 8) & 0xff);
+          const da = a - (c & 0xff);
+          const dist = dr * dr + dg * dg + db * db + da * da;
+          if (dist < bestDist) {
+            bestDist = dist;
+            idx = p;
+          }
+        }
+      }
+      lookup.set(key, idx);
+    }
+    indexed[i] = idx;
+  }
+
+  const raw = Buffer.alloc((width + 1) * height);
+  for (let y = 0; y < height; y += 1) {
+    indexed.copy(raw, y * (width + 1) + 1, y * width, (y + 1) * width);
+  }
+
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 3;
+
+  const plte = Buffer.alloc(colors.length * 3);
+  const trns = Buffer.alloc(colors.length);
+  let hasAlpha = false;
+  colors.forEach((key, i) => {
+    plte[i * 3] = key >>> 24;
+    plte[i * 3 + 1] = (key >>> 16) & 0xff;
+    plte[i * 3 + 2] = (key >>> 8) & 0xff;
+    trns[i] = key & 0xff;
+    if ((key & 0xff) !== 255) hasAlpha = true;
+  });
+
+  const chunks = [PNG_SIGNATURE, pngChunk('IHDR', ihdr), pngChunk('PLTE', plte)];
+  if (hasAlpha) {
+    chunks.push(pngChunk('tRNS', trns));
+  }
+  chunks.push(pngChunk('IDAT', deflateSync(raw, { level: 9 })), pngChunk('IEND', Buffer.alloc(0)));
+  return Buffer.concat(chunks);
+};
+
+const encodeCanvas = (canvas) => encodePng(canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height));
+
+const maxChannelDiff = async (buffer, source) => {
+  const img = await loadImage(buffer);
+  if (img.width !== SIZE || img.height !== SIZE) return -1;
+  const probe = createCanvas(SIZE, SIZE).getContext('2d');
+  probe.drawImage(img, 0, 0);
+  const decoded = probe.getImageData(0, 0, SIZE, SIZE).data;
+  const original = source.getContext('2d').getImageData(0, 0, SIZE, SIZE).data;
+  let max = 0;
+  for (let i = 0; i < decoded.length; i += 1) {
+    const d = Math.abs(decoded[i] - original[i]);
+    if (d > max) max = d;
+  }
+  return max;
+};
+
+const dosDateTime = (date) => ({
+  time: (date.getHours() << 11) | (date.getMinutes() << 5) | (date.getSeconds() >> 1),
+  date: ((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate()
+});
+
+const makeZip = (files) => {
+  const { time, date } = dosDateTime(new Date());
+  const parts = [];
+  const central = [];
+  let offset = 0;
+
+  for (const { name, data } of files) {
+    const nameBuf = Buffer.from(name, 'utf8');
+    const deflated = deflateRawSync(data, { level: 9 });
+    const useDeflate = deflated.length < data.length;
+    const payload = useDeflate ? deflated : data;
+    const method = useDeflate ? 8 : 0;
+    const crc = crc32(data);
+
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0, 6);
+    local.writeUInt16LE(method, 8);
+    local.writeUInt16LE(time, 10);
+    local.writeUInt16LE(date, 12);
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(payload.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(nameBuf.length, 26);
+    local.writeUInt16LE(0, 28);
+    parts.push(local, nameBuf, payload);
+
+    const entry = Buffer.alloc(46);
+    entry.writeUInt32LE(0x02014b50, 0);
+    entry.writeUInt16LE(20, 4);
+    entry.writeUInt16LE(20, 6);
+    entry.writeUInt16LE(0, 8);
+    entry.writeUInt16LE(method, 10);
+    entry.writeUInt16LE(time, 12);
+    entry.writeUInt16LE(date, 14);
+    entry.writeUInt32LE(crc, 16);
+    entry.writeUInt32LE(payload.length, 20);
+    entry.writeUInt32LE(data.length, 24);
+    entry.writeUInt16LE(nameBuf.length, 28);
+    entry.writeUInt16LE(0, 30);
+    entry.writeUInt16LE(0, 32);
+    entry.writeUInt16LE(0, 34);
+    entry.writeUInt16LE(0, 36);
+    entry.writeUInt32LE(0, 38);
+    entry.writeUInt32LE(offset, 42);
+    central.push(entry, nameBuf);
+
+    offset += local.length + nameBuf.length + payload.length;
+  }
+
+  const centralBuf = Buffer.concat(central);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(files.length, 8);
+  eocd.writeUInt16LE(files.length, 10);
+  eocd.writeUInt32LE(centralBuf.length, 12);
+  eocd.writeUInt32LE(offset, 16);
+  return Buffer.concat([...parts, centralBuf, eocd]);
+};
+
+const contactSheet = (canvases, cols, cell, iconSize) => {
   const rows = Math.ceil(canvases.length / cols);
   const pad = 8;
-  const canvas = createCanvas(cols * cell + pad * 2, rows * cell + pad * 2);
-  const ctx = canvas.getContext('2d');
+  const sheet = createCanvas(cols * cell + pad * 2, rows * cell + pad * 2);
+  const ctx = sheet.getContext('2d');
   ctx.fillStyle = '#14161B';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, sheet.width, sheet.height);
   canvases.forEach((icon, i) => {
     const x = pad + (i % cols) * cell + (cell - iconSize) / 2;
     const y = pad + Math.floor(i / cols) * cell + (cell - iconSize) / 2;
     ctx.drawImage(icon, x, y, iconSize, iconSize);
   });
-  return canvas;
-}
+  return sheet;
+};
 
-function smallSizeStrip(canvases) {
+const smallSizeStrip = (canvases) => {
   const n = 25;
   const cell = 24;
   const iconSize = 20;
   const pad = 10;
-  const canvas = createCanvas(pad * 2 + n * cell, pad * 2 + cell);
-  const ctx = canvas.getContext('2d');
+  const strip = createCanvas(pad * 2 + n * cell, pad * 2 + cell);
+  const ctx = strip.getContext('2d');
   ctx.fillStyle = '#14161B';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < n; i++) {
+  ctx.fillRect(0, 0, strip.width, strip.height);
+  for (let i = 0; i < n; i += 1) {
     const x = pad + i * cell + (cell - iconSize) / 2;
     ctx.drawImage(canvases[i], x, pad + (cell - iconSize) / 2, iconSize, iconSize);
   }
-  return canvas;
+  return strip;
+};
+
+for (const dir of [iconsDir, previewDir, distDir]) {
+  mkdirSync(dir, { recursive: true });
 }
 
-async function savePng(canvas, file) {
-  const buffer = await optimize(canvas.toBuffer('image/png'));
-  fs.writeFileSync(file, buffer);
-  return buffer.length;
+const probe = createCanvas(8, 8).getContext('2d');
+probe.font = fontSpec(40);
+const geoWidth = probe.measureText('808').width;
+probe.font = '40px sans-serif';
+const fallbackWidth = probe.measureText('808').width;
+if (Math.abs(geoWidth - fallbackWidth) < 0.01) {
+  console.warn(`warning: ${FAMILY} metrics match the fallback font, font may not be registered`);
+} else {
+  console.log(`font: ${FAMILY} ExtraBold ${WEIGHT} registered, tracking ${TRACKING}em`);
 }
+console.log('encoder: in-repo indexed PNG + zip on node:zlib, nearest-palette quantization above 256 colors');
 
-function reportStats(label, sizes) {
-  const total = sizes.reduce((a, b) => a + b, 0);
-  const avg = Math.round(total / sizes.length);
-  const min = Math.min(...sizes);
-  const max = Math.max(...sizes);
-  console.log(`${label}: ${sizes.length} files, total ${(total / 1024).toFixed(1)} KB, avg ${avg} B, min ${min} B, max ${max} B`);
-}
+const canvases = [];
+const zipFiles = [];
+const csvRows = [];
+const sizes = [];
+let worstDeviation = 0;
 
-async function main() {
-  [ICONS_DIR, PREVIEW_DIR, DIST_DIR].forEach(dir => fs.mkdirSync(dir, { recursive: true }));
+for (let i = 0; i < COUNT; i += 1) {
+  const number = i + 1;
+  const rgb = teamColor(i);
+  const fileName = `${String(number).padStart(3, '0')}.png`;
 
-  const probe = createCanvas(8, 8).getContext('2d');
-  probe.font = fontSpec(40);
-  const geoWidth = probe.measureText('808').width;
-  probe.font = '40px sans-serif';
-  const fallbackWidth = probe.measureText('808').width;
-  if (Math.abs(geoWidth - fallbackWidth) < 0.01) {
-    console.warn('warning: Geologica metrics match the fallback font, font may not be registered');
-  } else {
-    console.log(`font: Geologica ExtraBold ${WEIGHT} registered (${FONT_PATH})`);
+  const icon = drawIcon(number, rgb);
+  canvases.push(icon);
+
+  const buffer = encodeCanvas(icon);
+  const deviation = await maxChannelDiff(buffer, icon);
+  if (deviation < 0 || deviation > QUANT_TOLERANCE) {
+    throw new Error(`roundtrip deviation ${deviation} for ${fileName}`);
   }
-  console.log(`optimizer: ${sharp ? 'sharp palette quantization' : 'raw PNG (sharp not installed)'}`);
+  worstDeviation = Math.max(worstDeviation, deviation);
+  writeFileSync(join(iconsDir, fileName), buffer);
+  zipFiles.push({ name: `Observer/TeamIcon/${fileName}`, data: buffer });
+  sizes.push(buffer.length);
 
-  const canvases = [];
-  const zip = new JSZip();
-  const csvRows = [];
-  const sizes = [];
+  csvRows.push([number, `Team ${number}`, `T${number}`, fileName, `${toHex(rgb).slice(1)}FF`].join(','));
 
-  for (let i = 0; i < COUNT; i++) {
-    const number = i + 1;
-    const rgb = teamColor(i);
-    const fileName = String(number).padStart(3, '0') + '.png';
-
-    const icon = drawIcon(number, rgb);
-    canvases.push(icon);
-
-    const buffer = await optimize(icon.toBuffer('image/png'));
-    fs.writeFileSync(path.join(ICONS_DIR, fileName), buffer);
-    zip.file(`Observer/TeamIcon/${fileName}`, buffer);
-    sizes.push(buffer.length);
-
-    csvRows.push([number, `Team ${number}`, `T${number}`, fileName, toHex(rgb).slice(1) + 'FF'].join(','));
-
-    if ((i + 1) % 25 === 0) console.log(`generated ${i + 1}/${COUNT} icons`);
+  if ((i + 1) % 25 === 0) {
+    console.log(`generated ${i + 1}/${COUNT} icons`);
   }
-
-  const csv = 'Team #,TeamName,TeamShortName,ImageFileName,TeamColor\n' + csvRows.join('\n') + '\n';
-  fs.writeFileSync(path.join(OBSERVER_DIR, 'Teaminfo.csv'), csv);
-  zip.file('Observer/Teaminfo.csv', csv);
-
-  await savePng(contactSheet(canvases, 10, 60, 48), path.join(PREVIEW_DIR, 'preview.png'));
-  await savePng(smallSizeStrip(canvases), path.join(PREVIEW_DIR, 'small-size.png'));
-
-  const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } });
-  const zipPath = path.join(DIST_DIR, `pubg-numbers-feed-v${VERSION}.zip`);
-  fs.writeFileSync(zipPath, zipBuffer);
-
-  console.log('');
-  reportStats('TeamIcon', sizes);
-  console.log(`Teaminfo.csv: ${COUNT} rows`);
-  console.log(`dist zip: ${zipPath} (${(zipBuffer.length / 1024).toFixed(1)} KB)`);
-  console.log('done');
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+const csv = `Team #,TeamName,TeamShortName,ImageFileName,TeamColor\n${csvRows.join('\n')}\n`;
+writeFileSync(join(observerDir, 'Teaminfo.csv'), csv);
+zipFiles.push({ name: 'Observer/Teaminfo.csv', data: Buffer.from(csv) });
+
+writeFileSync(join(previewDir, 'preview.png'), encodeCanvas(contactSheet(canvases, 10, 60, 48)));
+writeFileSync(join(previewDir, 'small-size.png'), encodeCanvas(smallSizeStrip(canvases)));
+
+const zipBuffer = makeZip(zipFiles);
+const zipPath = join(distDir, `pubg-numbers-feed-v${version}.zip`);
+writeFileSync(zipPath, zipBuffer);
+
+const total = sizes.reduce((a, b) => a + b, 0);
+console.log('');
+console.log(`TeamIcon: ${sizes.length} files, total ${(total / 1024).toFixed(1)} KB, avg ${Math.round(total / sizes.length)} B, min ${Math.min(...sizes)} B, max ${Math.max(...sizes)} B`);
+console.log(`Teaminfo.csv: ${COUNT} rows`);
+console.log(`dist zip: ${zipPath} (${(zipBuffer.length / 1024).toFixed(1)} KB)`);
+console.log(`verify: decode roundtrip ${COUNT}/${COUNT}, max channel deviation ${worstDeviation}/255 (limit ${QUANT_TOLERANCE})`);
+console.log('done');

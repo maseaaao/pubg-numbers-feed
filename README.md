@@ -11,7 +11,7 @@ Flags require memorizing 100 flag-to-team mappings. Numbers don't: the team digi
 ## Features
 
 - **100 icons** (`001.png`–`100.png`) covering squads, duos and solos
-- **Geologica ExtraBold (800)** digits, auto-fitted per digit count so 1-, 2- and 3-digit numbers all fill the icon
+- **Oxanium ExtraBold (800)** squared esports digits, auto-fitted per digit count so 1-, 2- and 3-digit numbers all fill the icon
 - **Distinct color per team** — hues stepped by the golden angle (137.5°), so neighboring team numbers never share a hue
 - **WCAG auto-contrast** — digit color (white / near-black) picked per background via relative luminance
 - **Bordered digits** — every digit carries a high-contrast outline, so it stays readable on busy backgrounds and on any team color
@@ -32,6 +32,8 @@ Flags require memorizing 100 flag-to-team mappings. Numbers don't: the team digi
 
 ## Build from source
 
+Requires Node.js 24+. `node-canvas` is the only npm dependency (font rasterization); PNG encoding and zip packaging are built in-repo on top of `node:zlib`, and every generated icon passes a decode roundtrip check (worst channel deviation from nearest-palette quantization is capped at 16/255) before it is written.
+
 ```bash
 npm install
 npm run generate
@@ -47,9 +49,9 @@ Tweak `COUNT`, `SIZE` or the palette in `teamColor()` inside `src/generate.js` a
 
 ## Typography
 
-[Geologica](https://fonts.google.com/specimen/Geologica) by Nyisha Mirza Kalimar, Nazareth Seferian & Eben Sorkin — ExtraBold (weight 800), auto-sized up to 72 px on the 64 px canvas with a 4 px margin, so digits fill 80–90% of the icon regardless of digit count.
+[Oxanium](https://fonts.google.com/specimen/Oxanium) by Severin Meyer — ExtraBold (weight 800), auto-sized up to 72 px on the 64 px canvas with a 4 px margin, so digits fill 80–90% of the icon regardless of digit count. Glyphs are laid out per-character with 0.06 em tracking so multi-digit numbers never fuse together.
 
-**Stretched resolutions (16:10 on 16:9 panels) are accounted for:** the layout keeps ~10% headroom and relies on the heavy 800 weight, so counters of `0`, `6`, `8`, `9` stay open and digits remain fully legible under the ~11% non-uniform scaling. The font is bundled in `src/assets/fonts/` under the [SIL Open Font License 1.1](src/assets/fonts/Geologica-OFL.txt).
+**Stretched resolutions (16:10 on 16:9 panels) are accounted for:** the layout keeps ~10% headroom and relies on the heavy 800 weight, so counters of `0`, `6`, `8`, `9` stay open and digits remain fully legible under the ~11% non-uniform scaling. The font is bundled in `src/assets/fonts/` under the [SIL Open Font License 1.1](src/assets/fonts/Oxanium-OFL.txt).
 
 ## Credits
 
