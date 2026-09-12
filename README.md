@@ -49,7 +49,7 @@ Tweak `COUNT`, `SIZE` or the palette in `teamColor()` inside `src/generate.js` a
 
 ## Typography
 
-[Oxanium](https://fonts.google.com/specimen/Oxanium) by Severin Meyer — ExtraBold (weight 800), auto-sized up to 72 px on the 64 px canvas with a 4 px margin, so digits fill 80–90% of the icon regardless of digit count. Glyphs are laid out per-character with 0.06 em tracking so multi-digit numbers never fuse together.
+[Tektur](https://fonts.google.com/specimen/Tektur) by [The Tektur Project Authors](https://github.com/hyvyys/Tektur) — ExtraBold (weight 800), auto-sized up to 76 px on the 64 px canvas. Each icon is a full-canvas rounded chip (8 px radius) with transparent corners — the killfeed renderer respects alpha, matching how flag icons behave — and digits fill 85–95% of the usable space depending on digit count. Glyphs are laid out per-character with 0.06 em tracking so multi-digit numbers never fuse together.
 
 **Stretched resolutions (16:10 on 16:9 panels) are accounted for:** the layout keeps ~10% headroom and relies on the heavy 800 weight, so counters of `0`, `6`, `8`, `9` stay open and digits remain fully legible under the ~11% non-uniform scaling. The font is bundled in `src/assets/fonts/` under the [SIL Open Font License 1.1](src/assets/fonts/Oxanium-OFL.txt).
 
