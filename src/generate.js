@@ -8,8 +8,7 @@ try { sharp = require('sharp'); } catch (_) {}
 
 const ROOT = path.join(__dirname, '..');
 const OBSERVER_DIR = path.join(ROOT, 'Observer');
-const PLAIN_DIR = path.join(OBSERVER_DIR, 'TeamIcon');
-const NUMBERED_DIR = path.join(OBSERVER_DIR, 'TeamIconNumbered');
+const ICONS_DIR = path.join(OBSERVER_DIR, 'TeamIcon');
 const PREVIEW_DIR = path.join(ROOT, 'preview');
 const DIST_DIR = path.join(ROOT, 'dist');
 const FONT_PATH = path.join(__dirname, 'assets', 'fonts', 'Geologica-ExtraBold.ttf');
@@ -18,6 +17,7 @@ const VERSION = require('../package.json').version;
 const COUNT = 100;
 const SIZE = 64;
 const MAX_FONT_SIZE = 72;
+const PADDING = 4;
 const FAMILY = 'Geologica';
 const WEIGHT = 800;
 const DARK_TEXT = '#141519';
@@ -76,7 +76,7 @@ function fitFontSize(ctx, text, maxWidth, maxHeight) {
   return size;
 }
 
-function drawIcon(number, rgb, variant) {
+function drawIcon(number, rgb) {
   const canvas = createCanvas(SIZE, SIZE);
   const ctx = canvas.getContext('2d');
 
@@ -88,8 +88,7 @@ function drawIcon(number, rgb, variant) {
   ctx.strokeRect(1, 1, SIZE - 2, SIZE - 2);
 
   const text = String(number);
-  const padding = variant === 'numbered' ? 4 : 2;
-  const size = fitFontSize(ctx, text, SIZE - padding * 2, SIZE - padding * 2);
+  const size = fitFontSize(ctx, text, SIZE - PADDING * 2, SIZE - PADDING * 2);
   const m = textMetrics(ctx, text, size);
 
   ctx.textAlign = 'center';
@@ -97,13 +96,11 @@ function drawIcon(number, rgb, variant) {
   const baselineY = SIZE / 2 + (m.ascent - m.descent) / 2;
   const fill = textColor(rgb);
 
-  if (variant === 'numbered') {
-    ctx.lineJoin = 'round';
-    ctx.miterLimit = 2;
-    ctx.strokeStyle = fill === LIGHT_TEXT ? DARK_TEXT : LIGHT_TEXT;
-    ctx.lineWidth = Math.min(4, Math.max(2, size * 0.07));
-    ctx.strokeText(text, SIZE / 2, baselineY);
-  }
+  ctx.lineJoin = 'round';
+  ctx.miterLimit = 2;
+  ctx.strokeStyle = fill === LIGHT_TEXT ? DARK_TEXT : LIGHT_TEXT;
+  ctx.lineWidth = Math.min(4, Math.max(2, size * 0.07));
+  ctx.strokeText(text, SIZE / 2, baselineY);
 
   ctx.shadowColor = 'rgba(8,10,14,0.30)';
   ctx.shadowBlur = 2;
@@ -122,16 +119,6 @@ async function optimize(buffer) {
   return sharp(buffer).png({ palette: true, quality: 96, compressionLevel: 9 }).toBuffer();
 }
 
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
 function contactSheet(canvases, cols, cell, iconSize) {
   const rows = Math.ceil(canvases.length / cols);
   const pad = 8;
@@ -147,58 +134,18 @@ function contactSheet(canvases, cols, cell, iconSize) {
   return canvas;
 }
 
-function smallSizeStrip(plain, numbered) {
+function smallSizeStrip(canvases) {
   const n = 25;
   const cell = 24;
   const iconSize = 20;
   const pad = 10;
-  const gap = 12;
-  const canvas = createCanvas(pad * 2 + n * cell, pad * 2 + cell * 2 + gap);
+  const canvas = createCanvas(pad * 2 + n * cell, pad * 2 + cell);
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#14161B';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   for (let i = 0; i < n; i++) {
     const x = pad + i * cell + (cell - iconSize) / 2;
-    ctx.drawImage(plain[i], x, pad + (cell - iconSize) / 2, iconSize, iconSize);
-    ctx.drawImage(numbered[i], x, pad + cell + gap + (cell - iconSize) / 2, iconSize, iconSize);
-  }
-  return canvas;
-}
-
-function killfeedDemo(plain) {
-  const rows = 6;
-  const rowH = 36;
-  const pad = 14;
-  const iconSize = 22;
-  const canvas = createCanvas(560, rows * (rowH + 8) + pad * 2);
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#1D2026';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.textBaseline = 'middle';
-  for (let r = 0; r < rows; r++) {
-    const killer = r * 4 + 1;
-    const victim = r * 4 + 2;
-    const y = pad + r * (rowH + 8);
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    roundRect(ctx, pad, y, canvas.width - pad * 2, rowH, 5);
-    ctx.fill();
-    let x = pad + 10;
-    ctx.drawImage(plain[killer - 1], x, y + (rowH - iconSize) / 2, iconSize, iconSize);
-    x += iconSize + 10;
-    ctx.font = fontSpec(14);
-    ctx.fillStyle = '#E8EAED';
-    const killerName = 'Player_' + String(killer).padStart(2, '0');
-    ctx.fillText(killerName, x, y + rowH / 2 + 1);
-    x += ctx.measureText(killerName).width + 10;
-    ctx.fillStyle = '#9AA0A8';
-    ctx.font = fontSpec(12);
-    ctx.fillText('eliminated', x, y + rowH / 2 + 1);
-    x += ctx.measureText('eliminated').width + 10;
-    ctx.drawImage(plain[victim - 1], x, y + (rowH - iconSize) / 2, iconSize, iconSize);
-    x += iconSize + 10;
-    ctx.font = fontSpec(14);
-    ctx.fillStyle = '#E8EAED';
-    ctx.fillText('Player_' + String(victim).padStart(2, '0'), x, y + rowH / 2 + 1);
+    ctx.drawImage(canvases[i], x, pad + (cell - iconSize) / 2, iconSize, iconSize);
   }
   return canvas;
 }
@@ -218,7 +165,7 @@ function reportStats(label, sizes) {
 }
 
 async function main() {
-  [PLAIN_DIR, NUMBERED_DIR, PREVIEW_DIR, DIST_DIR].forEach(dir => fs.mkdirSync(dir, { recursive: true }));
+  [ICONS_DIR, PREVIEW_DIR, DIST_DIR].forEach(dir => fs.mkdirSync(dir, { recursive: true }));
 
   const probe = createCanvas(8, 8).getContext('2d');
   probe.font = fontSpec(40);
@@ -232,31 +179,23 @@ async function main() {
   }
   console.log(`optimizer: ${sharp ? 'sharp palette quantization' : 'raw PNG (sharp not installed)'}`);
 
-  const plainCanvases = [];
-  const numberedCanvases = [];
+  const canvases = [];
   const zip = new JSZip();
   const csvRows = [];
-  const plainSizes = [];
-  const numberedSizes = [];
+  const sizes = [];
 
   for (let i = 0; i < COUNT; i++) {
     const number = i + 1;
     const rgb = teamColor(i);
     const fileName = String(number).padStart(3, '0') + '.png';
 
-    const plainCanvas = drawIcon(number, rgb, 'plain');
-    const numberedCanvas = drawIcon(number, rgb, 'numbered');
-    plainCanvases.push(plainCanvas);
-    numberedCanvases.push(numberedCanvas);
+    const icon = drawIcon(number, rgb);
+    canvases.push(icon);
 
-    const plainBuffer = await optimize(plainCanvas.toBuffer('image/png'));
-    const numberedBuffer = await optimize(numberedCanvas.toBuffer('image/png'));
-    fs.writeFileSync(path.join(PLAIN_DIR, fileName), plainBuffer);
-    fs.writeFileSync(path.join(NUMBERED_DIR, fileName), numberedBuffer);
-    zip.file(`Observer/TeamIcon/${fileName}`, plainBuffer);
-    zip.file(`Observer/TeamIconNumbered/${fileName}`, numberedBuffer);
-    plainSizes.push(plainBuffer.length);
-    numberedSizes.push(numberedBuffer.length);
+    const buffer = await optimize(icon.toBuffer('image/png'));
+    fs.writeFileSync(path.join(ICONS_DIR, fileName), buffer);
+    zip.file(`Observer/TeamIcon/${fileName}`, buffer);
+    sizes.push(buffer.length);
 
     csvRows.push([number, `Team ${number}`, `T${number}`, fileName, toHex(rgb).slice(1) + 'FF'].join(','));
 
@@ -267,18 +206,15 @@ async function main() {
   fs.writeFileSync(path.join(OBSERVER_DIR, 'Teaminfo.csv'), csv);
   zip.file('Observer/Teaminfo.csv', csv);
 
-  await savePng(contactSheet(plainCanvases, 10, 60, 48), path.join(PREVIEW_DIR, 'preview.png'));
-  await savePng(contactSheet(numberedCanvases, 10, 60, 48), path.join(PREVIEW_DIR, 'preview-numbered.png'));
-  await savePng(smallSizeStrip(plainCanvases, numberedCanvases), path.join(PREVIEW_DIR, 'small-size.png'));
-  await savePng(killfeedDemo(plainCanvases), path.join(PREVIEW_DIR, 'killfeed-demo.png'));
+  await savePng(contactSheet(canvases, 10, 60, 48), path.join(PREVIEW_DIR, 'preview.png'));
+  await savePng(smallSizeStrip(canvases), path.join(PREVIEW_DIR, 'small-size.png'));
 
   const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } });
   const zipPath = path.join(DIST_DIR, `pubg-numbers-feed-v${VERSION}.zip`);
   fs.writeFileSync(zipPath, zipBuffer);
 
   console.log('');
-  reportStats('TeamIcon', plainSizes);
-  reportStats('TeamIconNumbered', numberedSizes);
+  reportStats('TeamIcon', sizes);
   console.log(`Teaminfo.csv: ${COUNT} rows`);
   console.log(`dist zip: ${zipPath} (${(zipBuffer.length / 1024).toFixed(1)} KB)`);
   console.log('done');

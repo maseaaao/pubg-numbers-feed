@@ -2,7 +2,7 @@
 
 100 numbered killfeed team icons for **PUBG: BATTLEGROUNDS** — big, high-contrast team digits in distinct colors, readable on any background at any killfeed size.
 
-![Killfeed demo](preview/killfeed-demo.png)
+![All icons](preview/preview.png)
 
 ## Why numbers
 
@@ -14,15 +14,9 @@ Flags require memorizing 100 flag-to-team mappings. Numbers don't: the team digi
 - **Geologica ExtraBold (800)** digits, auto-fitted per digit count so 1-, 2- and 3-digit numbers all fill the icon
 - **Distinct color per team** — hues stepped by the golden angle (137.5°), so neighboring team numbers never share a hue
 - **WCAG auto-contrast** — digit color (white / near-black) picked per background via relative luminance
-- **Two variants**
-  - `TeamIcon` — flat: digit on color with a subtle frame
-  - `TeamIconNumbered` — outlined: digit gets a high-contrast outline for extra punch on busy backgrounds
+- **Bordered digits** — every digit carries a high-contrast outline, so it stays readable on busy backgrounds and on any team color
 - **Lightweight** — palette-quantized PNGs, ~0.5 KB per icon
 - **Observer-ready** — `Teaminfo.csv` and folder layout match what the game expects
-
-![All icons](preview/preview.png)
-
-![Numbered variant](preview/preview-numbered.png)
 
 ![Small size check](preview/small-size.png)
 
@@ -33,9 +27,8 @@ Flags require memorizing 100 flag-to-team mappings. Numbers don't: the team digi
    ```
    %LOCALAPPDATA%\TslGame\Saved
    ```
-3. Copy the `Observer` folder there. It should contain `TeamIcon`, `TeamIconNumbered` and `Teaminfo.csv`
-4. **Optional:** prefer the outlined variant? Rename `TeamIconNumbered` to `TeamIcon` (rename the other one to anything else)
-5. Play
+3. Copy the `Observer` folder there. It should contain `TeamIcon` and `Teaminfo.csv`
+4. Play
 
 ## Build from source
 
@@ -47,14 +40,14 @@ npm run generate
 Outputs:
 
 - `Observer/` — icons + `Teaminfo.csv` (paste this into the game)
-- `preview/` — contact sheets and demo images
-- `dist/pubg-numbers-feed-v<version>.zip` - ready-to-share archive with the `Observer` folder
+- `preview/` — contact sheets
+- `dist/pubg-numbers-feed-v<version>.zip` — ready-to-share archive with the `Observer` folder
 
 Tweak `COUNT`, `SIZE` or the palette in `teamColor()` inside `src/generate.js` and re-run.
 
 ## Typography
 
-[Geologica](https://fonts.google.com/specimen/Geologica) by Nyisha Mirza Kalimar, Nazareth Seferian & Eben Sorkin — ExtraBold (weight 800), auto-sized up to 72 px on the 64 px canvas with a 2 px margin, so digits fill about 85% of the icon regardless of digit count.
+[Geologica](https://fonts.google.com/specimen/Geologica) by Nyisha Mirza Kalimar, Nazareth Seferian & Eben Sorkin — ExtraBold (weight 800), auto-sized up to 72 px on the 64 px canvas with a 4 px margin, so digits fill 80–90% of the icon regardless of digit count.
 
 **Stretched resolutions (16:10 on 16:9 panels) are accounted for:** the layout keeps ~10% headroom and relies on the heavy 800 weight, so counters of `0`, `6`, `8`, `9` stay open and digits remain fully legible under the ~11% non-uniform scaling. The font is bundled in `src/assets/fonts/` under the [SIL Open Font License 1.1](src/assets/fonts/Geologica-OFL.txt).
 
