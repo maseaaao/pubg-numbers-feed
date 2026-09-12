@@ -46,7 +46,7 @@ if (!process.env.PUBG_NUMBERS_FEED_CHILD) {
 
 registerFont(fontPath, { family: FAMILY, weight: WEIGHT });
 
-const fontSpec = (size) => `${size}px ${FAMILY}`;
+const fontSpec = (size) => `${size}px ${WEIGHT} ${FAMILY}`;
 
 const hslToRgb = (h, s, l) => {
   s /= 100;
