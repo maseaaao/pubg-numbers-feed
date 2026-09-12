@@ -21,7 +21,7 @@ const MAX_FONT_SIZE = 76;
 const PADDING = 3;
 const RADIUS = 8;
 const TRACKING = 0.06;
-const QUANT_TOLERANCE = 25;
+const QUANT_TOLERANCE = 40;
 const FAMILY = "Tektur";
 const WEIGHT = 800;
 const DARK_TEXT = "#141519";
@@ -44,7 +44,7 @@ if (!process.env.PUBG_NUMBERS_FEED_CHILD) {
   process.exit(child.status ?? 1);
 }
 
-registerFont(fontPath, { family: FAMILY });
+registerFont(fontPath, { family: FAMILY, weight: WEIGHT });
 
 const fontSpec = (size) => `${size}px ${FAMILY}`;
 
