@@ -1,0 +1,612 @@
+{
+  "minimumContrast": 7.001103787691037,
+  "closestPair": {
+    "teams": [
+      27,
+      100
+    ],
+    "distance": 0.05495872034671614
+  },
+  "teams": [
+    {
+      "team": 1,
+      "background": "#1616D9",
+      "text": "#F4F3EC",
+      "contrast": 8.777118138595865
+    },
+    {
+      "team": 2,
+      "background": "#FFFF10",
+      "text": "#20201E",
+      "contrast": 15.203587836262491
+    },
+    {
+      "team": 3,
+      "background": "#FF7CFF",
+      "text": "#20201E",
+      "contrast": 7.444282629564921
+    },
+    {
+      "team": 4,
+      "background": "#A01010",
+      "text": "#F4F3EC",
+      "contrast": 7.327551524236741
+    },
+    {
+      "team": 5,
+      "background": "#10C4C4",
+      "text": "#20201E",
+      "contrast": 7.55001012884785
+    },
+    {
+      "team": 6,
+      "background": "#FF9440",
+      "text": "#20201E",
+      "contrast": 7.431020147097808
+    },
+    {
+      "team": 7,
+      "background": "#105810",
+      "text": "#F4F3EC",
+      "contrast": 7.783481478305353
+    },
+    {
+      "team": 8,
+      "background": "#8810A0",
+      "text": "#F4F3EC",
+      "contrast": 7.181862320386443
+    },
+    {
+      "team": 9,
+      "background": "#10E810",
+      "text": "#20201E",
+      "contrast": 9.770342660229996
+    },
+    {
+      "team": 10,
+      "background": "#ACFFFF",
+      "text": "#20201E",
+      "contrast": 14.378768317438187
+    },
+    {
+      "team": 11,
+      "background": "#344070",
+      "text": "#F4F3EC",
+      "contrast": 8.932811350408743
+    },
+    {
+      "team": 12,
+      "background": "#FFC4F4",
+      "text": "#20201E",
+      "contrast": 11.233033370113015
+    },
+    {
+      "team": 13,
+      "background": "#B8D070",
+      "text": "#20201E",
+      "contrast": 9.55447685222075
+    },
+    {
+      "team": 14,
+      "background": "#A0ACFF",
+      "text": "#20201E",
+      "contrast": 7.646856528953953
+    },
+    {
+      "team": 15,
+      "background": "#10FFB8",
+      "text": "#20201E",
+      "contrast": 12.448379870866777
+    },
+    {
+      "team": 16,
+      "background": "#583410",
+      "text": "#F4F3EC",
+      "contrast": 9.86511473749363
+    },
+    {
+      "team": 17,
+      "background": "#70104C",
+      "text": "#F4F3EC",
+      "contrast": 10.109146603889487
+    },
+    {
+      "team": 18,
+      "background": "#E894B8",
+      "text": "#20201E",
+      "contrast": 7.273467395639025
+    },
+    {
+      "team": 19,
+      "background": "#FFDCAC",
+      "text": "#20201E",
+      "contrast": 12.500309387078705
+    },
+    {
+      "team": 20,
+      "background": "#10C464",
+      "text": "#20201E",
+      "contrast": 7.073556945139154
+    },
+    {
+      "team": 21,
+      "background": "#4C10A0",
+      "text": "#F4F3EC",
+      "contrast": 9.993535272777862
+    },
+    {
+      "team": 22,
+      "background": "#70DCFF",
+      "text": "#20201E",
+      "contrast": 10.390555517751638
+    },
+    {
+      "team": 23,
+      "background": "#A0FF1C",
+      "text": "#20201E",
+      "contrast": 13.068005845405734
+    },
+    {
+      "team": 24,
+      "background": "#C4FFAC",
+      "text": "#20201E",
+      "contrast": 14.180389676949172
+    },
+    {
+      "team": 25,
+      "background": "#6410DC",
+      "text": "#F4F3EC",
+      "contrast": 7.125302566744042
+    },
+    {
+      "team": 26,
+      "background": "#FFD010",
+      "text": "#20201E",
+      "contrast": 11.099000112408588
+    },
+    {
+      "team": 27,
+      "background": "#1CB8FF",
+      "text": "#20201E",
+      "contrast": 7.265936894421351
+    },
+    {
+      "team": 28,
+      "background": "#104CAC",
+      "text": "#F4F3EC",
+      "contrast": 7.119721014494464
+    },
+    {
+      "team": 29,
+      "background": "#7C404C",
+      "text": "#F4F3EC",
+      "contrast": 7.005540202824761
+    },
+    {
+      "team": 30,
+      "background": "#B8AC70",
+      "text": "#20201E",
+      "contrast": 7.128754543483983
+    },
+    {
+      "team": 31,
+      "background": "#F4B8AC",
+      "text": "#20201E",
+      "contrast": 9.557691754151643
+    },
+    {
+      "team": 32,
+      "background": "#70DCB8",
+      "text": "#20201E",
+      "contrast": 9.806252853362622
+    },
+    {
+      "team": 33,
+      "background": "#A0B810",
+      "text": "#20201E",
+      "contrast": 7.272793966084123
+    },
+    {
+      "team": 34,
+      "background": "#644088",
+      "text": "#F4F3EC",
+      "contrast": 7.1759641008220285
+    },
+    {
+      "team": 35,
+      "background": "#DCA0FF",
+      "text": "#20201E",
+      "contrast": 8.171990192817956
+    },
+    {
+      "team": 36,
+      "background": "#941C64",
+      "text": "#F4F3EC",
+      "contrast": 7.234917838174105
+    },
+    {
+      "team": 37,
+      "background": "#A0DC10",
+      "text": "#20201E",
+      "contrast": 9.900373568487485
+    },
+    {
+      "team": 38,
+      "background": "#1028A0",
+      "text": "#F4F3EC",
+      "contrast": 10.298100202325806
+    },
+    {
+      "team": 39,
+      "background": "#64107C",
+      "text": "#F4F3EC",
+      "contrast": 9.899212469819524
+    },
+    {
+      "team": 40,
+      "background": "#10FFFF",
+      "text": "#20201E",
+      "contrast": 13.032682535255795
+    },
+    {
+      "team": 41,
+      "background": "#C4C4FF",
+      "text": "#20201E",
+      "contrast": 9.859686350640914
+    },
+    {
+      "team": 42,
+      "background": "#E8B864",
+      "text": "#20201E",
+      "contrast": 8.914879542440673
+    },
+    {
+      "team": 43,
+      "background": "#FFFFC4",
+      "text": "#20201E",
+      "contrast": 15.817235894611748
+    },
+    {
+      "team": 44,
+      "background": "#58DC7C",
+      "text": "#20201E",
+      "contrast": 9.281605906787227
+    },
+    {
+      "team": 45,
+      "background": "#7C101C",
+      "text": "#F4F3EC",
+      "contrast": 9.691496256006292
+    },
+    {
+      "team": 46,
+      "background": "#10584C",
+      "text": "#F4F3EC",
+      "contrast": 7.484525363040776
+    },
+    {
+      "team": 47,
+      "background": "#D0E858",
+      "text": "#20201E",
+      "contrast": 11.941194534940335
+    },
+    {
+      "team": 48,
+      "background": "#7CB894",
+      "text": "#20201E",
+      "contrast": 7.103720784090675
+    },
+    {
+      "team": 49,
+      "background": "#1CFF70",
+      "text": "#20201E",
+      "contrast": 12.113568429232224
+    },
+    {
+      "team": 50,
+      "background": "#DCA088",
+      "text": "#20201E",
+      "contrast": 7.326083439910711
+    },
+    {
+      "team": 51,
+      "background": "#644C10",
+      "text": "#F4F3EC",
+      "contrast": 7.308237722807931
+    },
+    {
+      "team": 52,
+      "background": "#7CB8DC",
+      "text": "#20201E",
+      "contrast": 7.574542257518932
+    },
+    {
+      "team": 53,
+      "background": "#583458",
+      "text": "#F4F3EC",
+      "contrast": 9.222072674177559
+    },
+    {
+      "team": 54,
+      "background": "#DCA010",
+      "text": "#20201E",
+      "contrast": 7.05561296537719
+    },
+    {
+      "team": 55,
+      "background": "#FF887C",
+      "text": "#20201E",
+      "contrast": 7.0445603313505085
+    },
+    {
+      "team": 56,
+      "background": "#4034C4",
+      "text": "#F4F3EC",
+      "contrast": 7.532255107354378
+    },
+    {
+      "team": 57,
+      "background": "#ACE8C4",
+      "text": "#20201E",
+      "contrast": 11.730076500761648
+    },
+    {
+      "team": 58,
+      "background": "#FFF47C",
+      "text": "#20201E",
+      "contrast": 14.364149884705549
+    },
+    {
+      "team": 59,
+      "background": "#64D01C",
+      "text": "#20201E",
+      "contrast": 8.222917895104871
+    },
+    {
+      "team": 60,
+      "background": "#94FF88",
+      "text": "#20201E",
+      "contrast": 13.148214547642706
+    },
+    {
+      "team": 61,
+      "background": "#401CF4",
+      "text": "#F4F3EC",
+      "contrast": 7.016752608882263
+    },
+    {
+      "team": 62,
+      "background": "#10D0A0",
+      "text": "#20201E",
+      "contrast": 8.200389957893643
+    },
+    {
+      "team": 63,
+      "background": "#FF7CD0",
+      "text": "#20201E",
+      "contrast": 7.029921284958865
+    },
+    {
+      "team": 64,
+      "background": "#94E894",
+      "text": "#20201E",
+      "contrast": 11.058290733399215
+    },
+    {
+      "team": 65,
+      "background": "#C4ACDC",
+      "text": "#20201E",
+      "contrast": 7.990273109229228
+    },
+    {
+      "team": 66,
+      "background": "#7C3410",
+      "text": "#F4F3EC",
+      "contrast": 8.013802602625121
+    },
+    {
+      "team": 67,
+      "background": "#7028B8",
+      "text": "#F4F3EC",
+      "contrast": 7.03198017276536
+    },
+    {
+      "team": 68,
+      "background": "#FFA0DC",
+      "text": "#20201E",
+      "contrast": 8.792407381705734
+    },
+    {
+      "team": 69,
+      "background": "#7CC470",
+      "text": "#20201E",
+      "contrast": 7.761277001150819
+    },
+    {
+      "team": 70,
+      "background": "#DCD094",
+      "text": "#20201E",
+      "contrast": 10.486045785258423
+    },
+    {
+      "team": 71,
+      "background": "#7C287C",
+      "text": "#F4F3EC",
+      "contrast": 7.700370003126847
+    },
+    {
+      "team": 72,
+      "background": "#DCC410",
+      "text": "#20201E",
+      "contrast": 9.28418096392083
+    },
+    {
+      "team": 73,
+      "background": "#10E8E8",
+      "text": "#20201E",
+      "contrast": 10.6700832781131
+    },
+    {
+      "team": 74,
+      "background": "#ACC494",
+      "text": "#20201E",
+      "contrast": 8.608957160556049
+    },
+    {
+      "team": 75,
+      "background": "#1C5870",
+      "text": "#F4F3EC",
+      "contrast": 7.046071443335278
+    },
+    {
+      "team": 76,
+      "background": "#88FFD0",
+      "text": "#20201E",
+      "contrast": 13.41474810042573
+    },
+    {
+      "team": 77,
+      "background": "#4C2870",
+      "text": "#F4F3EC",
+      "contrast": 10.233203825478322
+    },
+    {
+      "team": 78,
+      "background": "#404094",
+      "text": "#F4F3EC",
+      "contrast": 7.935368955971541
+    },
+    {
+      "team": 79,
+      "background": "#A0E8F4",
+      "text": "#20201E",
+      "contrast": 11.924215457685786
+    },
+    {
+      "team": 80,
+      "background": "#10D0F4",
+      "text": "#20201E",
+      "contrast": 8.821106355128082
+    },
+    {
+      "team": 81,
+      "background": "#404C1C",
+      "text": "#F4F3EC",
+      "contrast": 8.321679223075563
+    },
+    {
+      "team": 82,
+      "background": "#DCE8A0",
+      "text": "#20201E",
+      "contrast": 12.50683392758475
+    },
+    {
+      "team": 83,
+      "background": "#D0FF58",
+      "text": "#20201E",
+      "contrast": 14.087157182525367
+    },
+    {
+      "team": 84,
+      "background": "#642834",
+      "text": "#F4F3EC",
+      "contrast": 9.96221451046992
+    },
+    {
+      "team": 85,
+      "background": "#88D0D0",
+      "text": "#20201E",
+      "contrast": 9.310160376571824
+    },
+    {
+      "team": 86,
+      "background": "#94C4FF",
+      "text": "#20201E",
+      "contrast": 9.014178063233516
+    },
+    {
+      "team": 87,
+      "background": "#C4B84C",
+      "text": "#20201E",
+      "contrast": 8.01054522074565
+    },
+    {
+      "team": 88,
+      "background": "#941C40",
+      "text": "#F4F3EC",
+      "contrast": 7.553303639863494
+    },
+    {
+      "team": 89,
+      "background": "#3410B8",
+      "text": "#F4F3EC",
+      "contrast": 9.872092033997198
+    },
+    {
+      "team": 90,
+      "background": "#FFE810",
+      "text": "#20201E",
+      "contrast": 13.05762518867746
+    },
+    {
+      "team": 91,
+      "background": "#FFAC7C",
+      "text": "#20201E",
+      "contrast": 8.89364793974683
+    },
+    {
+      "team": 92,
+      "background": "#10E8AC",
+      "text": "#20201E",
+      "contrast": 10.227479976662588
+    },
+    {
+      "team": 93,
+      "background": "#FFA0AC",
+      "text": "#20201E",
+      "contrast": 8.452213916835008
+    },
+    {
+      "team": 94,
+      "background": "#64E858",
+      "text": "#20201E",
+      "contrast": 10.278023532972526
+    },
+    {
+      "team": 95,
+      "background": "#FFB810",
+      "text": "#20201E",
+      "contrast": 9.415592468242755
+    },
+    {
+      "team": 96,
+      "background": "#4C4C7C",
+      "text": "#F4F3EC",
+      "contrast": 7.172186465389595
+    },
+    {
+      "team": 97,
+      "background": "#FFD070",
+      "text": "#20201E",
+      "contrast": 11.275013506640487
+    },
+    {
+      "team": 98,
+      "background": "#DC88FF",
+      "text": "#20201E",
+      "contrast": 7.001103787691037
+    },
+    {
+      "team": 99,
+      "background": "#10FF10",
+      "text": "#20201E",
+      "contrast": 11.916305307815028
+    },
+    {
+      "team": 100,
+      "background": "#70ACFF",
+      "text": "#20201E",
+      "contrast": 7.0206612507773425
+    }
+  ]
+}

@@ -1,9 +1,10 @@
-import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateRawSync, deflateSync } from "node:zlib";
-import { createCanvas, registerFont, loadImage } from "canvas";
+import { createCanvas, loadImage } from "canvas";
+import { BLUE, INK, PAPER, MIN_CONTRAST, fromHex, toHex, contrast, textColor, createPalette, oklab, distance } from "./palette.js";
+import { measure, drawLetter, drawLabel } from "./lettering.js";
 import pkg from "../package.json" with { type: "json" };
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -12,7 +13,6 @@ const observerDir = join(root, "Observer");
 const iconsDir = join(observerDir, "TeamIcon");
 const previewDir = join(root, "preview");
 const distDir = join(root, "dist");
-const fontPath = join(here, "assets", "fonts", "Tektur-ExtraBold.ttf");
 const version = pkg.version;
 
 const COUNT = 100;
@@ -20,83 +20,24 @@ const SIZE = 64;
 const MAX_FONT_SIZE = 76;
 const PADDING = 3;
 const RADIUS = 8;
-const TRACKING = 0.06;
+const TRACKING = 0.025;
 const QUANT_TOLERANCE = 40;
-const FAMILY = "Tektur";
-const WEIGHT = 800;
-const DARK_TEXT = "#141519";
-const LIGHT_TEXT = "#FFFFFF";
-const LUMA_THRESHOLD = 0.45;
-
-if (!process.env.PUBG_NUMBERS_FEED_CHILD) {
-  const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-    env: { ...process.env, PUBG_NUMBERS_FEED_CHILD: "1" },
-    stdio: ["inherit", "inherit", "pipe"],
-    encoding: "utf8",
-  });
-  const filtered = (child.stderr || "")
-    .split("\n")
-    .filter((line) => !line.includes(`couldn't load font "${FAMILY}`))
-    .join("\n");
-  if (filtered.trim()) {
-    process.stderr.write(filtered);
-  }
-  process.exit(child.status ?? 1);
-}
-
-registerFont(fontPath, { family: FAMILY, weight: WEIGHT });
-
-const fontSpec = (size) => `${WEIGHT} ${size}px ${FAMILY}`;
-
-const hslToRgb = (h, s, l) => {
-  s /= 100;
-  l /= 100;
-  const k = (n) => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n) =>
-    l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-  return [
-    Math.round(f(0) * 255),
-    Math.round(f(8) * 255),
-    Math.round(f(4) * 255),
-  ];
-};
-
-const toHex = (rgb) =>
-  `#${rgb.map((v) => v.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
-
-const relativeLuminance = ([r, g, b]) => {
-  const channel = (v) => {
-    v /= 255;
-    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-  };
-  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-};
-
-const teamColor = (index) => {
-  const hue = (index * 137.508) % 360;
-  const sat = 64 + (index % 2) * 12;
-  const light = 50 + (Math.floor(index / 2) % 3) * 7;
-  return hslToRgb(hue, sat, light);
-};
-
-const textColor = (rgb) =>
-  relativeLuminance(rgb) > LUMA_THRESHOLD ? DARK_TEXT : LIGHT_TEXT;
+const FAMILY = "Unbounded";
+const WEIGHT = 600;
+const palette = createPalette(COUNT);
 
 const layoutText = (ctx, text, size) => {
-  ctx.font = fontSpec(size);
   const tracking = size * TRACKING;
   const chars = [...text];
-  const widths = chars.map((ch) => ctx.measureText(ch).width);
-  const full = ctx.measureText(text);
+  const { widths, ascent, descent } = measure(text, size);
   return {
     chars,
     widths,
     tracking,
     size,
     width: widths.reduce((a, b) => a + b, 0) + tracking * (chars.length - 1),
-    ascent: full.actualBoundingBoxAscent || size * 0.74,
-    descent: full.actualBoundingBoxDescent || size * 0.04,
+    ascent: ascent,
+    descent: descent,
   };
 };
 
@@ -130,9 +71,6 @@ const drawIcon = (number, rgb) => {
   chipPath(ctx, 0.5, 0.5, SIZE - 1, SIZE - 1, RADIUS);
   ctx.fillStyle = toHex(rgb);
   ctx.fill();
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = "rgba(10,12,16,0.35)";
-  ctx.stroke();
 
   const layout = fitLayout(ctx, String(number), SIZE - PADDING * 2);
   const baselineY = SIZE / 2 + (layout.ascent - layout.descent) / 2;
@@ -141,31 +79,13 @@ const drawIcon = (number, rgb) => {
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.lineJoin = "round";
-  ctx.miterLimit = 2;
-  ctx.strokeStyle = fill === LIGHT_TEXT ? DARK_TEXT : LIGHT_TEXT;
-  ctx.lineWidth = Math.min(4, Math.max(2, layout.size * 0.07));
+  ctx.fillStyle = fill;
 
   let x = startX;
   for (let i = 0; i < layout.chars.length; i += 1) {
-    ctx.strokeText(layout.chars[i], x, baselineY);
+    drawLetter(ctx, layout.chars[i], x, baselineY, layout.size);
     x += layout.widths[i] + layout.tracking;
   }
-
-  ctx.shadowColor = "rgba(8,10,14,0.35)";
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 1;
-  ctx.fillStyle = fill;
-
-  x = startX;
-  for (let i = 0; i < layout.chars.length; i += 1) {
-    ctx.fillText(layout.chars[i], x, baselineY);
-    x += layout.widths[i] + layout.tracking;
-  }
-
-  ctx.shadowColor = "rgba(0,0,0,0)";
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetY = 0;
 
   return canvas;
 };
@@ -415,60 +335,47 @@ const makeZip = (files) => {
 };
 
 const contactSheet = (canvases, cols, cell, iconSize) => {
-  const rows = Math.ceil(canvases.length / cols);
-  const pad = 8;
-  const sheet = createCanvas(cols * cell + pad * 2, rows * cell + pad * 2);
+  const pad = 28, header = 116;
+  const sheet = createCanvas(cols * cell + pad * 2, Math.ceil(canvases.length / cols) * cell + pad * 2 + header);
   const ctx = sheet.getContext("2d");
-  ctx.fillStyle = "#14161B";
+  ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, sheet.width, sheet.height);
-  canvases.forEach((icon, i) => {
-    const x = pad + (i % cols) * cell + (cell - iconSize) / 2;
-    const y = pad + Math.floor(i / cols) * cell + (cell - iconSize) / 2;
-    ctx.drawImage(icon, x, y, iconSize, iconSize);
+  ctx.fillStyle = BLUE;
+  ctx.fillRect(0, 0, sheet.width, header);
+  ctx.fillStyle = PAPER;
+  drawLabel(ctx, "maseaaao / PUBG", pad, 32, 13);
+  drawLabel(ctx, "Numbers feed", pad, 72, 26);
+  ctx.font = "13px Arial";
+  ctx.fillText("100 teams / Unbounded 600 / text contrast >= 7:1", pad, 98);
+  canvases.forEach((icon, i) => ctx.drawImage(icon,
+    pad + (i % cols) * cell + (cell - iconSize) / 2,
+    header + pad + Math.floor(i / cols) * cell + (cell - iconSize) / 2, iconSize, iconSize));
+  return sheet;
+};
+const smallSizeStrip = (canvases) => {
+  const cols = 25, cell = 26, pad = 20, header = 52, block = 214;
+  const sheet = createCanvas(pad * 2 + cols * cell, header + 3 * block);
+  const ctx = sheet.getContext("2d");
+  ctx.fillStyle = BLUE;
+  ctx.fillRect(0, 0, sheet.width, sheet.height);
+  ctx.fillStyle = PAPER;
+  drawLabel(ctx, "maseaaao / killfeed size check", pad, 32, 15);
+  [INK, PAPER, "#54684B"].forEach((bg, section) => {
+    const top = header + section * block;
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, top, sheet.width, block);
+    ctx.fillStyle = section === 1 ? INK : PAPER;
+    ctx.font = "13px Arial";
+    ctx.fillText(["20 px / dark HUD", "20 px / light HUD", "20 px / terrain + 11% horizontal stretch"][section], pad, top + 24);
+    canvases.forEach((icon, i) => ctx.drawImage(icon,
+      pad + (i % cols) * cell, top + 38 + Math.floor(i / cols) * 44,
+      section === 2 ? 22.2 : 20, 20));
   });
   return sheet;
 };
+for (const dir of [iconsDir, previewDir, distDir]) mkdirSync(dir, { recursive: true });
 
-const smallSizeStrip = (canvases) => {
-  const n = 25;
-  const cell = 24;
-  const iconSize = 20;
-  const pad = 10;
-  const strip = createCanvas(pad * 2 + n * cell, pad * 2 + cell);
-  const ctx = strip.getContext("2d");
-  ctx.fillStyle = "#14161B";
-  ctx.fillRect(0, 0, strip.width, strip.height);
-  for (let i = 0; i < n; i += 1) {
-    const x = pad + i * cell + (cell - iconSize) / 2;
-    ctx.drawImage(
-      canvases[i],
-      x,
-      pad + (cell - iconSize) / 2,
-      iconSize,
-      iconSize,
-    );
-  }
-  return strip;
-};
-
-for (const dir of [iconsDir, previewDir, distDir]) {
-  mkdirSync(dir, { recursive: true });
-}
-
-const probe = createCanvas(8, 8).getContext("2d");
-probe.font = fontSpec(40);
-const geoWidth = probe.measureText("808").width;
-probe.font = "40px sans-serif";
-const fallbackWidth = probe.measureText("808").width;
-if (Math.abs(geoWidth - fallbackWidth) < 0.01) {
-  console.warn(
-    `warning: ${FAMILY} metrics match the fallback font, font may not be registered`,
-  );
-} else {
-  console.log(
-    `font: ${FAMILY} ExtraBold ${WEIGHT} registered, tracking ${TRACKING}em`,
-  );
-}
+console.log(`font: ${FAMILY} SemiBold ${WEIGHT}, bundled vector outlines, tracking ${TRACKING}em`);
 console.log(
   "encoder: in-repo indexed PNG + zip on node:zlib, nearest-palette quantization above 256 colors",
 );
@@ -481,7 +388,7 @@ let worstDeviation = 0;
 
 for (let i = 0; i < COUNT; i += 1) {
   const number = i + 1;
-  const rgb = teamColor(i);
+  const rgb = palette[i];
   const fileName = `${String(number).padStart(3, "0")}.png`;
 
   const icon = drawIcon(number, rgb);
@@ -541,4 +448,21 @@ console.log(
 console.log(
   `verify: decode roundtrip ${COUNT}/${COUNT}, max channel deviation ${worstDeviation}/255 (limit ${QUANT_TOLERANCE})`,
 );
+
+const ratios = palette.map((rgb) => contrast(rgb, fromHex(textColor(rgb))));
+let closest = { distance: Infinity };
+for (let i = 0; i < COUNT; i++) {
+  for (let j = i + 1; j < COUNT; j++) {
+    const d = distance(oklab(palette[i]), oklab(palette[j]));
+    if (d < closest.distance) closest = { teams: [i + 1, j + 1], distance: d };
+  }
+}
+if (new Set(palette.map(toHex)).size !== COUNT || Math.min(...ratios) < MIN_CONTRAST) {
+  throw new Error("Palette uniqueness / contrast validation failed");
+}
+writeFileSync(join(previewDir, "palette.json"), JSON.stringify({
+  minimumContrast: Math.min(...ratios), closestPair: closest,
+  teams: palette.map((rgb, i) => ({ team: i + 1, background: toHex(rgb), text: textColor(rgb), contrast: ratios[i] }))
+}, null, 2) + "\n");
+console.log(`palette: ${COUNT} unique colors, min contrast ${Math.min(...ratios).toFixed(2)}:1, min OKLab distance ${closest.distance.toFixed(4)}`);
 console.log("done");

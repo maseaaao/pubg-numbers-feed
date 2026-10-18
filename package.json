@@ -1,13 +1,14 @@
 {
   "name": "pubg-numbers-feed",
-  "version": "1.4.0",
-  "description": "100 numbered killfeed team icons for PUBG: BATTLEGROUNDS - big high-contrast team digits in distinct colors, typeset in Tektur",
+  "version": "1.5.0",
+  "description": "100 high-contrast numbered PUBG team icons in the maseaaao identity, typeset in Unbounded",
   "type": "module",
   "main": "src/generate.js",
   "private": true,
   "scripts": {
     "generate": "node src/generate.js",
-    "build": "node src/generate.js"
+    "build": "node src/generate.js",
+    "test": "node --test src/palette.test.js"
   },
   "engines": {
     "node": ">=24"
